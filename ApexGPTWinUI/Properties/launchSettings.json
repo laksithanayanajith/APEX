@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "ApexGPTWinUI (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "ApexGPTWinUI (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

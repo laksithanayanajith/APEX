@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "New Profile",
+    "Projects": [
+      {
+        "Path": "..\\ApexGPT.Bot\\ApexGPT.Bot.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "ApexGPTWinUI.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]
