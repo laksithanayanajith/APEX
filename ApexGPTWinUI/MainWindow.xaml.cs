@@ -242,26 +242,61 @@ namespace ApexGPTWinUI
             });
         }
 
+        // In ApexGPTWinUI/MainWindow.xaml.cs
+
         private async void MicButton_Click(object sender, RoutedEventArgs e)
         {
+            // 1. Disable button and update UI
             MicButton.IsEnabled = false;
-            InputBox.PlaceholderText = "Listening...";
+            InputBox.PlaceholderText = "Listening... (Speak Now)";
+            InputBox.Text = ""; // Clear previous text
+
             try
             {
-                var speechRecognizer = new SpeechRecognizer();
-                await speechRecognizer.CompileConstraintsAsync();
-                SpeechRecognitionResult result = await speechRecognizer.RecognizeAsync();
-                if (result.Status == SpeechRecognitionResultStatus.Success)
+                // 2. Initialize the Speech Recognizer
+                var speechRecognizer = new Windows.Media.SpeechRecognition.SpeechRecognizer();
+
+                // 3. Compile constraints (Critical step for dictation)
+                var compilationResult = await speechRecognizer.CompileConstraintsAsync();
+
+                if (compilationResult.Status != Windows.Media.SpeechRecognition.SpeechRecognitionResultStatus.Success)
                 {
+                    InputBox.PlaceholderText = "Speech Engine Failed";
+                    return;
+                }
+
+                // 4. Start Listening
+                Windows.Media.SpeechRecognition.SpeechRecognitionResult result = await speechRecognizer.RecognizeAsync();
+
+                // 5. Process Result
+                if (result.Status == Windows.Media.SpeechRecognition.SpeechRecognitionResultStatus.Success)
+                {
+                    // SUCCESS: Type the spoken words into the field
                     InputBox.Text = result.Text;
                 }
+                else
+                {
+                    InputBox.PlaceholderText = "Didn't catch that. Try again.";
+                }
             }
-            catch
+            catch (Exception ex)
             {
+                // 6. Handle Errors (Permission or Admin issues)
                 InputBox.PlaceholderText = "Mic Error";
+
+                // Show a popup with the real error reason
+                ContentDialog errorDialog = new ContentDialog
+                {
+                    Title = "Microphone Error",
+                    Content = $"Could not access microphone.\n\nCheck these 3 things:\n1. Windows Settings > Privacy > Microphone > Allow desktop apps is ON.\n2. 'Microphone' capability is checked in Package.appxmanifest.\n3. (Rare) Running as Admin can sometimes block audio APIs.\n\nError Details: {ex.Message}",
+                    CloseButtonText = "OK",
+                    XamlRoot = this.Content.XamlRoot // Required for WinUI 3
+                };
+                await errorDialog.ShowAsync();
             }
             finally
             {
+                // 7. Reset UI
                 MicButton.IsEnabled = true;
                 if (string.IsNullOrEmpty(InputBox.Text))
                     InputBox.PlaceholderText = "Ask ApexGPT...";
