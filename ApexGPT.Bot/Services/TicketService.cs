@@ -95,13 +95,29 @@ namespace ApexGPT.Bot.Services
             }
         }
 
-        // 5. Get Active Ticket (Allow returning null)
+        // 5. Get Active Ticket (Now sorted by Priority)
         public Ticket? GetActiveTicket(string userId)
         {
-            return _database.Tickets.FirstOrDefault(t => t.User_Id == userId && !t.Is_Resolved);
+            // ✅ CHANGE: Sorts by Priority (1=High) and then by creation time
+            return _database.Tickets
+                .Where(t => t.User_Id == userId && !t.Is_Resolved)
+                .OrderBy(t => t.Priority)
+                .ThenBy(t => t.Created_At)
+                .FirstOrDefault();
         }
 
-        // 6. Get KB Articles
+        // 6. Get Ticket History (Now sorted by Priority)
+        public List<Ticket> GetTicketsByUserId(string userId)
+        {
+            // ✅ CHANGE: Sorts by Priority (1=High) then by creation time
+            return _database.Tickets
+                .Where(t => t.User_Id == userId)
+                .OrderBy(t => t.Priority)
+                .ThenBy(t => t.Created_At)
+                .ToList() ?? new List<Ticket>();
+        }
+
+        // 7. Get KB Articles
         public List<KnowledgeBaseArticle> GetAllArticles()
         {
             return _database.Knowledge_Base ?? new List<KnowledgeBaseArticle>();

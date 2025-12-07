@@ -1,15 +1,18 @@
+using ApexGPTWinUI.Models; // Required for TicketHistoryItem
+using ApexGPTWinUI.Services;
+using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
-using Microsoft.UI;
-using ApexGPTWinUI.Services;
-using System.Collections.ObjectModel;
 using System;
-using System.Threading.Tasks;
-using Windows.Media.SpeechRecognition;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
+using System.Threading.Tasks;
+using Windows.Media.SpeechRecognition;
 using Windows.UI;
 
 namespace ApexGPTWinUI
@@ -28,6 +31,8 @@ namespace ApexGPTWinUI
         private SafeTroubleshooter _troubleshooter = new SafeTroubleshooter();
         private static readonly HttpClient _httpClient = new HttpClient();
 
+        // NOTE: Ensure the SplitView component is named MainSplitView in XAML
+
         public MainWindow()
         {
             this.InitializeComponent();
@@ -35,7 +40,39 @@ namespace ApexGPTWinUI
             AddBotMessage("System Online. Connected to ApexGPT Cloud Core.");
         }
 
-        // --- 1. SEND BUTTON ---
+        // --- 1. SIDEBAR & NAVIGATION ---
+
+        private void MenuButton_Click(object sender, RoutedEventArgs e)
+        {
+            // In Inline mode, this button is now redundant, but we keep the method hook
+        }
+
+        private void NewChatButton_Click(object sender, RoutedEventArgs e)
+        {
+            Messages.Clear();
+            AddBotMessage("System Online. Connected to ApexGPT Cloud Core. New session started.");
+            // Sidebar remains open due to XAML DisplayMode="Inline"
+        }
+
+        private async void HistoryButton_Click(object sender, RoutedEventArgs e)
+        {
+            const string userId = "user_0001";
+
+            if (sender is Button btn) btn.IsEnabled = false;
+            LoadingSpinner.Visibility = Visibility.Visible;
+
+            Messages.Clear();
+            AddBotMessage($"Fetching ticket history for User {userId}...");
+
+            await FetchTicketHistory(userId);
+
+            LoadingSpinner.Visibility = Visibility.Collapsed;
+            if (sender is Button finalBtn) finalBtn.IsEnabled = true;
+        }
+
+
+        // --- 2. CORE CHAT LOGIC ---
+
         private void SendButton_Click(object sender, RoutedEventArgs e) => ProcessUserMessage();
 
         private void InputBox_KeyUp(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e)
@@ -43,13 +80,11 @@ namespace ApexGPTWinUI
             if (e.Key == Windows.System.VirtualKey.Enter) ProcessUserMessage();
         }
 
-        // --- 2. CORE PROCESS ---
         private async void ProcessUserMessage()
         {
             string text = InputBox.Text;
             if (string.IsNullOrWhiteSpace(text)) return;
 
-            // Show User Message
             Messages.Add(new UIMessage
             {
                 Text = text,
@@ -59,21 +94,17 @@ namespace ApexGPTWinUI
             });
             InputBox.Text = "";
 
-            // UI Loading
             LoadingSpinner.Visibility = Visibility.Visible;
             SendButton.Visibility = Visibility.Collapsed;
             MicButton.Visibility = Visibility.Collapsed;
 
-            // API Call
             await CallBotApi(text);
 
-            // UI Restore
             LoadingSpinner.Visibility = Visibility.Collapsed;
             SendButton.Visibility = Visibility.Visible;
             MicButton.Visibility = Visibility.Visible;
         }
 
-        // --- 3. API CALL ---
         private async Task CallBotApi(string userText)
         {
             try
@@ -82,7 +113,6 @@ namespace ApexGPTWinUI
                 string json = JsonSerializer.Serialize(payload);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                // Ensure port matches your Bot project (e.g. 5142)
                 string botUrl = "http://localhost:5142/api/ai/ask";
 
                 HttpResponseMessage response = await _httpClient.PostAsync(botUrl, content);
@@ -109,7 +139,8 @@ namespace ApexGPTWinUI
             }
         }
 
-        // --- 4. HANDLER ---
+        // --- 3. COMMAND & HISTORY HANDLERS ---
+
         private void HandleCommand(string commandText)
         {
             string actionResult = "";
@@ -140,6 +171,62 @@ namespace ApexGPTWinUI
             AddBotMessage($"RESULT:\n{actionResult}");
         }
 
+        private async Task FetchTicketHistory(string userId)
+        {
+            try
+            {
+                string historyUrl = $"http://localhost:5142/api/ai/history/{userId}";
+
+                HttpResponseMessage response = await _httpClient.GetAsync(historyUrl);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    string responseString = await response.Content.ReadAsStringAsync();
+
+                    // Uses the TicketHistoryItem model (must be created in WinUI/Models)
+                    var history = System.Text.Json.JsonSerializer.Deserialize<List<TicketHistoryItem>>(
+                        responseString,
+                        new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                    );
+
+                    if (history != null && history.Any())
+                    {
+                        Messages.Add(new UIMessage
+                        {
+                            Text = $"?? Found {history.Count} tickets (Highest Priority First):",
+                            Alignment = HorizontalAlignment.Left,
+                            Color = new SolidColorBrush(Microsoft.UI.Colors.LightGray)
+                        });
+
+                        foreach (var ticket in history)
+                        {
+                            string logSummary = string.Join("\n * ", ticket.TroubleshootingLogs.TakeLast(3));
+
+                            AddBotMessage($"--- TICKET {ticket.Id} ---");
+                            AddBotMessage($"Status: **{ticket.Status}** (Priority {ticket.Priority})");
+                            AddBotMessage($"Issue: {ticket.Title}");
+                            AddBotMessage($"Last Actions:\n * {logSummary}");
+                        }
+                    }
+                    else
+                    {
+                        AddBotMessage("No active or historical tickets found for this user.");
+                    }
+                }
+                else
+                {
+                    string errorContent = await response.Content.ReadAsStringAsync();
+                    AddBotMessage($"Error fetching history: {response.StatusCode}. Details: {errorContent}");
+                }
+            }
+            catch (Exception ex)
+            {
+                AddBotMessage($"FATAL CONNECTION ERROR: {ex.Message}");
+            }
+        }
+
+        // --- 4. HELPERS ---
+
         private void AddBotMessage(string text)
         {
             Messages.Add(new UIMessage
@@ -151,7 +238,6 @@ namespace ApexGPTWinUI
             });
         }
 
-        // --- 5. MIC LOGIC (Completely separate method) ---
         private async void MicButton_Click(object sender, RoutedEventArgs e)
         {
             MicButton.IsEnabled = false;

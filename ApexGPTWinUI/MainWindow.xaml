@@ -7,113 +7,165 @@
     mc:Ignorable="d">
 
     <Grid Background="#F3F3F3">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
 
-        <Grid Grid.Row="0">
-            <Grid.Background>
-                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                    <GradientStop Color="#F3F3F3" Offset="0"/>
-                    <GradientStop Color="#FFFFFF" Offset="1"/>
-                </LinearGradientBrush>
-            </Grid.Background>
+        <SplitView x:Name="MainSplitView" 
+                   DisplayMode="Inline" 
+                   IsPaneOpen="True"
+                   OpenPaneLength="250">
 
-            <StackPanel Orientation="Horizontal" Padding="20,15">
-                <FontIcon Glyph="&#xE99A;" FontFamily="Segoe MDL2 Assets" Foreground="#0078D4" FontSize="20" Margin="0,0,10,0"/>
-                <TextBlock Text="ApexGPT 1.0" Foreground="#333333" FontWeight="SemiBold" FontSize="18" VerticalAlignment="Center"/>
-            </StackPanel>
+            <SplitView.Pane>
+                <Grid Background="#FFFFFF">
+                    <StackPanel Orientation="Vertical">
 
-            <Border BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" VerticalAlignment="Bottom"/>
-        </Grid>
-
-        <ListView x:Name="ChatHistoryList" Grid.Row="1" Margin="10,0" Padding="0,10" SelectionMode="None">
-            <ListView.ItemContainerStyle>
-                <Style TargetType="ListViewItem">
-                    <Setter Property="Template">
-                        <Setter.Value>
-                            <ControlTemplate TargetType="ListViewItem">
-                                <ContentPresenter />
-                            </ControlTemplate>
-                        </Setter.Value>
-                    </Setter>
-                </Style>
-            </ListView.ItemContainerStyle>
-
-            <ListView.ItemTemplate>
-                <DataTemplate>
-                    <Grid HorizontalAlignment="{Binding Alignment}" Margin="0,6">
-                        <Border Background="{Binding Color}" CornerRadius="18" Padding="15,10" MaxWidth="400">
-                            <Border.Shadow>
-                                <ThemeShadow/>
-                            </Border.Shadow>
-                            <TextBlock Text="{Binding Text}" Foreground="{Binding ForeColor}" 
-                                       TextWrapping="Wrap" FontSize="14" LineHeight="20"/>
+                        <Border BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" VerticalAlignment="Top">
+                            <TextBlock Text="Menu" 
+                                       Padding="15" 
+                                       FontWeight="SemiBold" 
+                                       Foreground="#333333"/>
                         </Border>
-                    </Grid>
-                </DataTemplate>
-            </ListView.ItemTemplate>
-        </ListView>
 
-        <Grid Grid.Row="2" Background="#FFFFFF" Padding="20">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
+                        <Button x:Name="NewChatButton" 
+                                Content="&#xE73A; New Chat" 
+                                HorizontalAlignment="Stretch"
+                                Width="230" Height="40" 
+                                Style="{StaticResource AccentButtonStyle}"
+                                Margin="10,20,10,10"
+                                Click="NewChatButton_Click"/>
 
-            <Border BorderBrush="#E5E5E5" BorderThickness="0,1,0,0" VerticalAlignment="Top" Grid.ColumnSpan="2"/>
+                        <TextBlock Text="Recent Sessions" 
+                                   FontSize="12" 
+                                   Margin="10,10,10,5" 
+                                   Foreground="Gray"/>
+                        <ListView Height="300" x:Name="PreviousChatsList" SelectionMode="None">
+                        </ListView>
 
-            <Border Grid.Column="0" Background="#F9F9F9" CornerRadius="20" Height="45" BorderBrush="#E0E0E0" BorderThickness="1">
-                <Grid>
-                    <TextBox x:Name="InputBox" 
-                             PlaceholderText="Ask ApexGPT..." 
-                             Foreground="#333333"
-                             Background="Transparent"
-                             BorderThickness="0"
-                             VerticalAlignment="Center"
-                             Margin="15,0,0,2"
-                             FontSize="14"
-                             KeyUp="InputBox_KeyUp"
-                             Style="{StaticResource DefaultTextBoxStyle}"/>
+
+                    </StackPanel>
+
+                    <Border BorderBrush="#E0E0E0" BorderThickness="0,1,0,0" VerticalAlignment="Bottom">
+                        <Button x:Name="ViewTicketsButton" 
+                                Content="&#xE7F4; View Tickets" 
+                                HorizontalAlignment="Stretch"
+                                Width="230" Height="40"
+                                Margin="10,10,10,10"
+                                Click="HistoryButton_Click"/>
+                    </Border>
                 </Grid>
-            </Border>
+            </SplitView.Pane>
 
-            <Grid Grid.Column="1" Margin="10,0,0,0">
-                <StackPanel Orientation="Horizontal">
+            <SplitView.Content>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
 
-                    <Button x:Name="MicButton" 
-                            Click="MicButton_Click"
-                            Background="Transparent" 
-                            BorderThickness="1"
-                            BorderBrush="#E0E0E0"
-                            Width="45" Height="45" 
-                            CornerRadius="22"
-                            Margin="0,0,10,0"
-                            ToolTipService.ToolTip="Speak">
-                        <Button.Content>
-                            <FontIcon Glyph="&#xE720;" FontFamily="Segoe MDL2 Assets" Foreground="#555555" FontSize="16"/>
-                        </Button.Content>
-                    </Button>
+                    <Grid Grid.Row="0">
+                        <Grid.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                <GradientStop Color="#F3F3F3" Offset="0"/>
+                                <GradientStop Color="#FFFFFF" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Grid.Background>
 
-                    <Button x:Name="SendButton" 
-                            Click="SendButton_Click"
-                            Background="#0078D4" 
-                            Width="45" Height="45" 
-                            CornerRadius="22">
-                        <Button.Content>
-                            <FontIcon Glyph="&#xE724;" FontFamily="Segoe MDL2 Assets" Foreground="White" FontSize="16"/>
-                        </Button.Content>
-                    </Button>
-                </StackPanel>
+                        <StackPanel Orientation="Horizontal" Padding="20,15">
+                            <FontIcon Glyph="&#xE99A;" FontFamily="Segoe MDL2 Assets" Foreground="#0078D4" FontSize="20" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="ApexGPT 1.0" Foreground="#333333" FontWeight="SemiBold" FontSize="18" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <Border BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" VerticalAlignment="Bottom"/>
+                    </Grid>
 
-                <ProgressRing x:Name="LoadingSpinner" 
-                              IsActive="True" 
-                              Visibility="Collapsed"
-                              Width="40" Height="40" 
-                              Foreground="#0078D4"/>
-            </Grid>
-        </Grid>
+                    <ListView x:Name="ChatHistoryList" Grid.Row="1" Margin="10,0" Padding="0,10" SelectionMode="None">
+                        <ListView.ItemContainerStyle>
+                            <Style TargetType="ListViewItem">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ListViewItem">
+                                            <ContentPresenter />
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ListView.ItemContainerStyle>
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid HorizontalAlignment="{Binding Alignment}" Margin="0,6">
+                                    <Border Background="{Binding Color}" CornerRadius="18" Padding="15,10" MaxWidth="400">
+                                        <Border.Shadow>
+                                            <ThemeShadow/>
+                                        </Border.Shadow>
+                                        <TextBlock Text="{Binding Text}" Foreground="{Binding ForeColor}" 
+                                                   TextWrapping="Wrap" FontSize="14" LineHeight="20"/>
+                                    </Border>
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+
+                    <Grid Grid.Row="2" Background="#FFFFFF" Padding="20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Border BorderBrush="#E5E5E5" BorderThickness="0,1,0,0" VerticalAlignment="Top" Grid.ColumnSpan="2"/>
+
+                        <Border Grid.Column="0" Background="#F9F9F9" CornerRadius="20" Height="45" BorderBrush="#E0E0E0" BorderThickness="1">
+                            <Grid>
+                                <TextBox x:Name="InputBox" 
+                                         PlaceholderText="Ask ApexGPT..." 
+                                         Foreground="#333333"
+                                         Background="Transparent"
+                                         BorderThickness="0"
+                                         VerticalAlignment="Center"
+                                         Margin="15,0,0,2"
+                                         FontSize="14"
+                                         KeyUp="InputBox_KeyUp"
+                                         Style="{StaticResource DefaultTextBoxStyle}"/>
+
+                                <ProgressRing x:Name="LoadingSpinner"  
+                                              IsActive="True"  
+                                              Visibility="Collapsed"
+                                              Width="40" Height="40"  
+                                              Foreground="#0078D4"
+                                              HorizontalAlignment="Right"
+                                              Margin="0,0,60,0"/>
+                            </Grid>
+                        </Border>
+
+                        <Grid Grid.Column="1" Margin="10,0,0,0">
+                            <StackPanel Orientation="Horizontal">
+                                <Button x:Name="MicButton"  
+                                        Click="MicButton_Click"
+                                        Background="Transparent"  
+                                        BorderThickness="1"
+                                        BorderBrush="#E0E0E0"
+                                        Width="45" Height="45"  
+                                        CornerRadius="22"
+                                        Margin="0,0,10,0"
+                                        ToolTipService.ToolTip="Speak">
+                                    <Button.Content>
+                                        <FontIcon Glyph="&#xE720;" FontFamily="Segoe MDL2 Assets" Foreground="#555555" FontSize="16"/>
+                                    </Button.Content>
+                                </Button>
+
+                                <Button x:Name="SendButton"  
+                                        Click="SendButton_Click"
+                                        Background="#0078D4"  
+                                        Width="45" Height="45"  
+                                        CornerRadius="22"
+                                        ToolTipService.ToolTip="Send Message">
+                                    <Button.Content>
+                                        <FontIcon Glyph="&#xE724;" FontFamily="Segoe MDL2 Assets" Foreground="White" FontSize="16"/>
+                                    </Button.Content>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+                </Grid>
+            </SplitView.Content>
+
+        </SplitView>
     </Grid>
 </Window>

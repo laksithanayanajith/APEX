@@ -30,6 +30,30 @@ namespace ApexGPT.Bot.Controllers
             public string UserId { get; set; } = "user_0001";
         }
 
+        [HttpGet("history/{userId}")]
+        public IActionResult GetTicketHistory(string userId)
+        {
+            try
+            {
+                // This calls the service method you just confirmed
+                var history = _ticketService.GetTicketsByUserId(userId);
+
+                if (history.Count > 0)
+                {
+                    // Return the full list for the UI to display
+                    return Ok(history);
+                }
+                else
+                {
+                    return NotFound(new { message = $"No ticket history found for user ID: {userId}" });
+                }
+            }
+            catch (System.Exception ex)
+            {
+                return StatusCode(500, $"Error fetching history: {ex.Message}");
+            }
+        }
+
         [HttpPost("ask")]
         public async Task<IActionResult> AskGemini([FromBody] UserRequest request)
         {
@@ -59,18 +83,30 @@ namespace ApexGPT.Bot.Controllers
                 var client = new Client(apiKey: _apiKey);
 
                 // 3. SMART PROMPT (Updated with ESCALATE instructions)
-                string systemPrompt = $"SYSTEM: You are ApexGPT, an expert IT Support Agent.\n" +
-                                      $"TICKET ID: {ticket.Id} | STATUS: {ticket.Status}\n" +
-                                      $"{kbContext}\n" +
-                                      $"INSTRUCTIONS:\n" +
-                                      $"1. If you can fix it safely, reply: 'COMMAND:CHECK_DISK', 'COMMAND:CHECK_PING', or 'COMMAND:FLUSH_DNS'.\n" +
-                                      $"2. If the issue is solved, reply: 'COMMAND:RESOLVE'.\n" +
-                                      $"3. CRITICAL: If the issue is dangerous (smoke, fire, hardware failure) OR if you cannot solve it, reply: 'COMMAND:ESCALATE'.\n" +
-                                      $"4. Otherwise, provide helpful advice.\n" +
+                string systemPrompt = $"SYSTEM: You are ApexGPT, an expert IT Support Agent. Your primary goal is to diagnose and resolve the USER's reported issue based on the provided CONTEXT.\n\n" +
+
+                                      $"CONTEXT & DATA:\n" +
+                                      $"- TICKET ID: {ticket.Id} | STATUS: {ticket.Status}\n" +
+                                      $"- KNOWLEDGE BASE:\n{kbContext}\n\n" + // Use a clear separation for RAG data
+
+                                      $"PRIORITY INSTRUCTIONS (Follow these steps strictly):\n" +
+
+                                      // Enhanced Guardrail (Stricter phrasing for refusal)
+                                      $"1. **GUARDRAIL REFUSAL:** If the user's message is not related to IT, computers, or technical support, you MUST reply ONLY with the refusal phrase: 'I am only designed to assist with IT and PC troubleshooting. How can I help you with your computer issues?'\n\n" +
+
+                                      // Command Structure (Stricter and clearer command language)
+                                      $"2. **COMMAND DECISION:** Based ONLY on the ticket status and user input, reply ONLY with a COMMAND if an action is needed. Choose from the following options:\n" +
+                                      $"\t- Execute Local Action: 'COMMAND:CHECK_DISK' OR 'COMMAND:CHECK_PING' OR 'COMMAND:FLUSH_DNS'\n" +
+                                      $"\t- Issue Resolved: 'COMMAND:RESOLVE'\n" +
+                                      $"\t- Critical Failure/Cannot Resolve: 'COMMAND:ESCALATE'\n\n" +
+
+                                      $"3. **STANDARD RESPONSE:** If you cannot issue a command or the command is not appropriate, provide concise, professional, and helpful advice.\n\n" +
+
                                       $"USER: {request.Prompt}";
 
                 var response = await client.Models.GenerateContentAsync(
-                    model: "gemini-2.5-pro", // Using the smart model
+                    //model: "gemini-2.5-pro", // Using the smart model
+                    model: "gemini-2.5-flash",
                     contents: new List<Content>
                     {
                         new Content
