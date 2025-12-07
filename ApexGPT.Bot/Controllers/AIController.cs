@@ -102,7 +102,8 @@ namespace ApexGPT.Bot.Controllers
                                       $"USER: {request.Prompt}";
 
                 var response = await client.Models.GenerateContentAsync(
-                    model: "gemini-1.5-flash", // Corrected model for stable quotas
+                    //model: "gemini-1.5-flash", // Corrected model for stable quotas
+                    model: "gemini-2.5-flash",
                     contents: new List<Content>
                     {
                         new Content

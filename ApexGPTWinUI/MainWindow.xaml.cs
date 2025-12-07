@@ -1,4 +1,4 @@
-using ApexGPTWinUI.Models; // Required for TicketHistoryItem
+﻿using ApexGPTWinUI.Models; // Required for TicketHistoryItem
 using ApexGPTWinUI.Services;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
@@ -110,7 +110,8 @@ namespace ApexGPTWinUI
                 string json = JsonSerializer.Serialize(payload);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                string botUrl = "http://localhost:5142/api/ai/ask";
+                bool isLiveEnv = true;
+                string botUrl = isLiveEnv ? "https://apexgpt-hackathon-bot-bxehhrc3ajcuanf5.westcentralus-01.azurewebsites.net/api/ai/ask" : "http://localhost:5142/api/ai/ask";
 
                 HttpResponseMessage response = await _httpClient.PostAsync(botUrl, content);
 
@@ -179,7 +180,8 @@ namespace ApexGPTWinUI
         {
             try
             {
-                string historyUrl = $"http://localhost:5142/api/ai/history/{userId}";
+                bool isLiveEnv = true;
+                string historyUrl = isLiveEnv ? $"https://apexgpt-hackathon-bot-bxehhrc3ajcuanf5.westcentralus-01.azurewebsites.net/api/ai/history/{userId}" : $"http://localhost:5142/api/ai/history/{userId}";
 
                 HttpResponseMessage response = await _httpClient.GetAsync(historyUrl);
 
@@ -196,7 +198,7 @@ namespace ApexGPTWinUI
                     {
                         Messages.Add(new UIMessage
                         {
-                            Text = $"?? Found {history.Count} tickets (Highest Priority First):",
+                            Text = $"🎫 Found {history.Count} tickets (Highest Priority First):",
                             Alignment = HorizontalAlignment.Left,
                             Color = new SolidColorBrush(Microsoft.UI.Colors.LightGray)
                         });
