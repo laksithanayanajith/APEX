@@ -31,8 +31,6 @@ namespace ApexGPTWinUI
         private SafeTroubleshooter _troubleshooter = new SafeTroubleshooter();
         private static readonly HttpClient _httpClient = new HttpClient();
 
-        // NOTE: Ensure the SplitView component is named MainSplitView in XAML
-
         public MainWindow()
         {
             this.InitializeComponent();
@@ -44,14 +42,12 @@ namespace ApexGPTWinUI
 
         private void MenuButton_Click(object sender, RoutedEventArgs e)
         {
-            // In Inline mode, this button is now redundant, but we keep the method hook
         }
 
         private void NewChatButton_Click(object sender, RoutedEventArgs e)
         {
             Messages.Clear();
             AddBotMessage("System Online. Connected to ApexGPT Cloud Core. New session started.");
-            // Sidebar remains open due to XAML DisplayMode="Inline"
         }
 
         private async void HistoryButton_Click(object sender, RoutedEventArgs e)
@@ -85,6 +81,7 @@ namespace ApexGPTWinUI
             string text = InputBox.Text;
             if (string.IsNullOrWhiteSpace(text)) return;
 
+            // FIX: Restored user message color to RoyalBlue for blue theme
             Messages.Add(new UIMessage
             {
                 Text = text,
@@ -145,27 +142,34 @@ namespace ApexGPTWinUI
         {
             string actionResult = "";
             string userMessage = "";
+            string commandLower = commandText.ToLower(); // Use lowercased command for reliable matching
 
-            if (commandText.Contains("CHECK_DISK"))
+            if (commandLower.Contains("check_disk"))
             {
-                userMessage = "Running disk check...";
-                actionResult = _troubleshooter.RunAction("check_disk");
+                userMessage = "Running disk hardware and health check...";
             }
-            else if (commandText.Contains("CHECK_PING"))
+            else if (commandLower.Contains("check_ping"))
             {
-                userMessage = "Testing connectivity...";
-                actionResult = _troubleshooter.RunAction("check_ping");
+                userMessage = "Testing connectivity to external DNS (8.8.8.8)...";
             }
-            else if (commandText.Contains("FLUSH_DNS"))
+            else if (commandLower.Contains("flush_dns"))
             {
-                userMessage = "Flushing DNS...";
-                actionResult = _troubleshooter.RunAction("flush_dns");
+                userMessage = "Flushing DNS cache...";
             }
-            else if (commandText.Contains("ESCALATED"))
+            else if (commandLower.Contains("reduce_ram"))
+            {
+                userMessage = "Analyzing top 5 memory consuming processes...";
+            }
+            else if (commandLower.Contains("clean_disk"))
+            {
+                userMessage = "Calculating temporary file size for cleaning recommendation...";
+            }
+            else if (commandLower.Contains("escalated"))
             {
                 userMessage = "ESCALATION ALERT:";
-                actionResult = commandText;
             }
+            // Execute the action (SafeTroubleshooter handles all known commands)
+            actionResult = _troubleshooter.RunAction(commandLower.Replace("command:", "").Trim());
 
             AddBotMessage(userMessage);
             AddBotMessage($"RESULT:\n{actionResult}");
@@ -183,7 +187,6 @@ namespace ApexGPTWinUI
                 {
                     string responseString = await response.Content.ReadAsStringAsync();
 
-                    // Uses the TicketHistoryItem model (must be created in WinUI/Models)
                     var history = System.Text.Json.JsonSerializer.Deserialize<List<TicketHistoryItem>>(
                         responseString,
                         new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }

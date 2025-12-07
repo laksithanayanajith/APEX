@@ -14,13 +14,11 @@ namespace ApexGPT.Bot.Controllers
     public class AIController : ControllerBase
     {
         private readonly string _apiKey;
-        private readonly IConfiguration configuration;
         private readonly TicketService _ticketService;
 
         public AIController(IConfiguration configuration, TicketService ticketService)
         {
             _apiKey = configuration["Gemini:ApiKey"] ?? string.Empty;
-            this.configuration = configuration;
             _ticketService = ticketService;
         }
 
@@ -35,12 +33,10 @@ namespace ApexGPT.Bot.Controllers
         {
             try
             {
-                // This calls the service method you just confirmed
                 var history = _ticketService.GetTicketsByUserId(userId);
 
                 if (history.Count > 0)
                 {
-                    // Return the full list for the UI to display
                     return Ok(history);
                 }
                 else
@@ -68,7 +64,7 @@ namespace ApexGPT.Bot.Controllers
 
             // 2. KNOWLEDGE BASE CONTEXT
             var articles = _ticketService.GetAllArticles();
-            string kbContext = "Here are some relevant Knowledge Base articles:\n";
+            string kbContext = "";
             foreach (var art in articles)
             {
                 if (request.Prompt.ToLower().Contains(art.Category.ToLower()) ||
@@ -82,21 +78,22 @@ namespace ApexGPT.Bot.Controllers
             {
                 var client = new Client(apiKey: _apiKey);
 
-                // 3. SMART PROMPT (Updated with ESCALATE instructions)
+                // 3. SMART PROMPT (Includes all new commands and enhanced structure)
                 string systemPrompt = $"SYSTEM: You are ApexGPT, an expert IT Support Agent. Your primary goal is to diagnose and resolve the USER's reported issue based on the provided CONTEXT.\n\n" +
 
                                       $"CONTEXT & DATA:\n" +
                                       $"- TICKET ID: {ticket.Id} | STATUS: {ticket.Status}\n" +
-                                      $"- KNOWLEDGE BASE:\n{kbContext}\n\n" + // Use a clear separation for RAG data
+                                      $"- KNOWLEDGE BASE:\n{kbContext}\n\n" +
 
                                       $"PRIORITY INSTRUCTIONS (Follow these steps strictly):\n" +
 
-                                      // Enhanced Guardrail (Stricter phrasing for refusal)
                                       $"1. **GUARDRAIL REFUSAL:** If the user's message is not related to IT, computers, or technical support, you MUST reply ONLY with the refusal phrase: 'I am only designed to assist with IT and PC troubleshooting. How can I help you with your computer issues?'\n\n" +
 
-                                      // Command Structure (Stricter and clearer command language)
                                       $"2. **COMMAND DECISION:** Based ONLY on the ticket status and user input, reply ONLY with a COMMAND if an action is needed. Choose from the following options:\n" +
-                                      $"\t- Execute Local Action: 'COMMAND:CHECK_DISK' OR 'COMMAND:CHECK_PING' OR 'COMMAND:FLUSH_DNS'\n" +
+                                      $"\t- Low Memory/High CPU: 'COMMAND:REDUCE_RAM'\n" +
+                                      $"\t- Network Issue: 'COMMAND:CHECK_PING' OR 'COMMAND:FLUSH_DNS'\n" +
+                                      $"\t- Disk Space Low: 'COMMAND:CLEAN_DISK'\n" +
+                                      $"\t- System Health Diagnostic: 'COMMAND:CHECK_DISK'\n" +
                                       $"\t- Issue Resolved: 'COMMAND:RESOLVE'\n" +
                                       $"\t- Critical Failure/Cannot Resolve: 'COMMAND:ESCALATE'\n\n" +
 
@@ -105,8 +102,7 @@ namespace ApexGPT.Bot.Controllers
                                       $"USER: {request.Prompt}";
 
                 var response = await client.Models.GenerateContentAsync(
-                    //model: "gemini-2.5-pro", // Using the smart model
-                    model: "gemini-2.5-flash",
+                    model: "gemini-1.5-flash", // Corrected model for stable quotas
                     contents: new List<Content>
                     {
                         new Content
@@ -119,13 +115,10 @@ namespace ApexGPT.Bot.Controllers
 
                 string answer = response?.Candidates?[0].Content?.Parts?[0].Text ?? "No response";
 
-                // 4. ACTION HANDLING (Now includes Escalation)
+                // 4. ACTION HANDLING
                 if (answer.Contains("COMMAND:ESCALATE"))
                 {
-                    // Call the new service method
                     _ticketService.EscalateTicket(ticket.Id, "AI could not resolve the issue or detected danger.");
-
-                    // Override answer for the user
                     answer = $"I have detected a critical issue. I have ESCALATED Ticket {ticket.Id} to a Senior Human Technician immediately.";
                 }
                 else if (answer.Contains("COMMAND:RESOLVE"))
@@ -135,6 +128,7 @@ namespace ApexGPT.Bot.Controllers
                 }
                 else if (answer.Contains("COMMAND:"))
                 {
+                    // Logs action for new commands: CHECK_DISK, REDUCE_RAM, CLEAN_DISK, etc.
                     _ticketService.LogAction(ticket.Id, $"AI executed automated command: {answer}");
                 }
                 else
