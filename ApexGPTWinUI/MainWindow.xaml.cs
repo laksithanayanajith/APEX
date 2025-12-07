@@ -30,6 +30,7 @@ namespace ApexGPTWinUI
         public ObservableCollection<UIMessage> Messages { get; set; } = new();
         private SafeTroubleshooter _troubleshooter = new SafeTroubleshooter();
         private static readonly HttpClient _httpClient = new HttpClient();
+        private bool _isLiveEnvironment = true; // Toggle between live and local API
 
         public MainWindow()
         {
@@ -110,8 +111,7 @@ namespace ApexGPTWinUI
                 string json = JsonSerializer.Serialize(payload);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                bool isLiveEnv = true;
-                string botUrl = isLiveEnv ? "https://apexgpt-hackathon-bot-bxehhrc3ajcuanf5.westcentralus-01.azurewebsites.net/api/ai/ask" : "http://localhost:5142/api/ai/ask";
+                string botUrl = _isLiveEnvironment ? "https://apexgpt-hackathon-bot-bxehhrc3ajcuanf5.westcentralus-01.azurewebsites.net/api/ai/ask" : "http://localhost:5142/api/ai/ask";
 
                 HttpResponseMessage response = await _httpClient.PostAsync(botUrl, content);
 
@@ -180,8 +180,7 @@ namespace ApexGPTWinUI
         {
             try
             {
-                bool isLiveEnv = true;
-                string historyUrl = isLiveEnv ? $"https://apexgpt-hackathon-bot-bxehhrc3ajcuanf5.westcentralus-01.azurewebsites.net/api/ai/history/{userId}" : $"http://localhost:5142/api/ai/history/{userId}";
+                string historyUrl = _isLiveEnvironment ? $"https://apexgpt-hackathon-bot-bxehhrc3ajcuanf5.westcentralus-01.azurewebsites.net/api/ai/history/{userId}" : $"http://localhost:5142/api/ai/history/{userId}";
 
                 HttpResponseMessage response = await _httpClient.GetAsync(historyUrl);
 

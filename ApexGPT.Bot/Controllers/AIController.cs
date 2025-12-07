@@ -78,7 +78,7 @@ namespace ApexGPT.Bot.Controllers
             {
                 var client = new Client(apiKey: _apiKey);
 
-                // 3. SMART PROMPT (Includes all new commands and enhanced structure)
+                // In ApexGPT.Bot/Controllers/AIController.cs, replace the current systemPrompt construction with this:
                 string systemPrompt = $"SYSTEM: You are ApexGPT, an expert IT Support Agent. Your primary goal is to diagnose and resolve the USER's reported issue based on the provided CONTEXT.\n\n" +
 
                                       $"CONTEXT & DATA:\n" +
@@ -89,7 +89,9 @@ namespace ApexGPT.Bot.Controllers
 
                                       $"1. **GUARDRAIL REFUSAL:** If the user's message is not related to IT, computers, or technical support, you MUST reply ONLY with the refusal phrase: 'I am only designed to assist with IT and PC troubleshooting. How can I help you with your computer issues?'\n\n" +
 
-                                      $"2. **COMMAND DECISION:** Based ONLY on the ticket status and user input, reply ONLY with a COMMAND if an action is needed. Choose from the following options:\n" +
+                                      $"2. **COMMAND EXECUTION CONDITION:** Execute a COMMAND *ONLY* if the issue is Critical (like fire/smoke) OR the USER explicitly says words like 'fix it now', 'run the tool', or 'do it automatically'.\n" +
+
+                                      $"3. **COMMAND DECISION:** If the condition in Step 2 is met, reply ONLY with one of the following commands:\n" +
                                       $"\t- Low Memory/High CPU: 'COMMAND:REDUCE_RAM'\n" +
                                       $"\t- Network Issue: 'COMMAND:CHECK_PING' OR 'COMMAND:FLUSH_DNS'\n" +
                                       $"\t- Disk Space Low: 'COMMAND:CLEAN_DISK'\n" +
@@ -97,7 +99,7 @@ namespace ApexGPT.Bot.Controllers
                                       $"\t- Issue Resolved: 'COMMAND:RESOLVE'\n" +
                                       $"\t- Critical Failure/Cannot Resolve: 'COMMAND:ESCALATE'\n\n" +
 
-                                      $"3. **STANDARD RESPONSE:** If you cannot issue a command or the command is not appropriate, provide concise, professional, and helpful advice.\n\n" +
+                                      $"4. **STANDARD RESPONSE (DEFAULT):** If the command condition (Step 2) is *NOT* met, you MUST provide concise, professional, and helpful advice in the form of a **numbered, step-by-step instruction list** to guide the user to solve the problem manually.\n\n" +
 
                                       $"USER: {request.Prompt}";
 
@@ -141,7 +143,7 @@ namespace ApexGPT.Bot.Controllers
             }
             catch (System.Exception ex)
             {
-                return StatusCode(500, $"AI Error: {ex.Message}");
+                return StatusCode(500, $"AI Error: {ex}");
             }
         }
     }
