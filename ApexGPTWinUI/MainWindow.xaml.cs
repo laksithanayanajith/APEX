@@ -1,4 +1,4 @@
-﻿using ApexGPTWinUI.Models; // Required for TicketHistoryItem
+﻿using ApexGPTWinUI.Models;
 using ApexGPTWinUI.Services;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
@@ -37,6 +37,9 @@ namespace ApexGPTWinUI
             this.InitializeComponent();
             ChatHistoryList.ItemsSource = Messages;
             AddBotMessage("System Online. Connected to ApexGPT Cloud Core.");
+
+            // DEFAULT: Ensure the chat input is visible on startup
+            InputAreaGrid.Visibility = Visibility.Visible;
         }
 
         // --- 1. SIDEBAR & NAVIGATION ---
@@ -49,6 +52,9 @@ namespace ApexGPTWinUI
         {
             Messages.Clear();
             AddBotMessage("System Online. Connected to ApexGPT Cloud Core. New session started.");
+
+            // SHOW the input field for chatting
+            InputAreaGrid.Visibility = Visibility.Visible;
         }
 
         private async void HistoryButton_Click(object sender, RoutedEventArgs e)
@@ -57,6 +63,9 @@ namespace ApexGPTWinUI
 
             if (sender is Button btn) btn.IsEnabled = false;
             LoadingSpinner.Visibility = Visibility.Visible;
+
+            // HIDE the input field while viewing history so user can't chat
+            InputAreaGrid.Visibility = Visibility.Collapsed;
 
             Messages.Clear();
             AddBotMessage($"Fetching ticket history for User {userId}...");
@@ -241,8 +250,6 @@ namespace ApexGPTWinUI
                 Alignment = HorizontalAlignment.Left
             });
         }
-
-        // In ApexGPTWinUI/MainWindow.xaml.cs
 
         private async void MicButton_Click(object sender, RoutedEventArgs e)
         {

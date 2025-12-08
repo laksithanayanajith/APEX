@@ -25,12 +25,16 @@
                         </Border>
 
                         <Button x:Name="NewChatButton" 
-                                Content="&#xE73A; New Chat" 
                                 HorizontalAlignment="Stretch"
                                 Width="230" Height="40" 
-                                Style="{StaticResource AccentButtonStyle}"
+                                Background="#0078D4" 
                                 Margin="10,20,10,10"
-                                Click="NewChatButton_Click"/>
+                                Click="NewChatButton_Click">
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <FontIcon Glyph="&#xE10C;" FontFamily="Segoe MDL2 Assets" Foreground="White"/>
+                                <TextBlock Text="New Chat" FontFamily="Segoe UI" Foreground="White" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
 
                         <TextBlock Text="Recent Sessions" 
                                    FontSize="12" 
@@ -44,11 +48,16 @@
 
                     <Border BorderBrush="#E0E0E0" BorderThickness="0,1,0,0" VerticalAlignment="Bottom">
                         <Button x:Name="ViewTicketsButton" 
-                                Content="&#xE7F4; View Tickets" 
                                 HorizontalAlignment="Stretch"
                                 Width="230" Height="40"
+                                Background="#F9F9F9"
                                 Margin="10,10,10,10"
-                                Click="HistoryButton_Click"/>
+                                Click="HistoryButton_Click">
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <FontIcon Glyph="&#xE7F4;" FontFamily="Segoe MDL2 Assets" Foreground="#333333"/>
+                                <TextBlock Text="View Tickets" FontFamily="Segoe UI" Foreground="#333333" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
                     </Border>
                 </Grid>
             </SplitView.Pane>
@@ -103,7 +112,7 @@
                         </ListView.ItemTemplate>
                     </ListView>
 
-                    <Grid Grid.Row="2" Background="#FFFFFF" Padding="20">
+                    <Grid x:Name="InputAreaGrid" Grid.Row="2" Background="#FFFFFF" Padding="20">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>

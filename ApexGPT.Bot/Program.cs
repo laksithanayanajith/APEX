@@ -1,7 +1,9 @@
 using ApexGPT.Bot.Bots;
+using ApexGPT.Bot.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Integration.AspNet.Core;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -16,12 +18,15 @@ builder.Services.AddSwaggerGen();
 
 // 1. Create the Bot Adapter (The "Phone Line")
 // We use CloudAdapter which is the modern standard
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseInMemoryDatabase("ApexHackathonDb"));
+
 builder.Services.AddSingleton<IBotFrameworkHttpAdapter, CloudAdapter>();
 
 // 2. Create the Bot (The "Person on the Phone")
 builder.Services.AddTransient<IBot, EchoBot>();
 // Register the Ticket Database (Singleton = One shared database for the whole app)
-builder.Services.AddSingleton<ApexGPT.Bot.Services.TicketService>();
+builder.Services.AddScoped<ApexGPT.Bot.Services.TicketService>();
 
 // --- BOT FRAMEWORK REGISTRATION END ---
 
